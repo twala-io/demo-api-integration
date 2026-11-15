@@ -22,7 +22,7 @@ export function ActivityFeed({ version, webhooks }: { version: number; webhooks:
         <div>
           <h2>Activity</h2>
           <p className="muted small">
-            {webhooks ? 'Webhooks on: new events refresh the app as they arrive.' : 'Webhooks off: set TWALA_WEBHOOK_SECRET to get live updates.'}
+            {webhooks ? 'Live updates are on.' : 'Live updates are off.'}
           </p>
         </div>
         <button className="link" onClick={load}>Refresh</button>

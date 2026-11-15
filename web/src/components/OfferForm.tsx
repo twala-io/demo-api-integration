@@ -67,7 +67,7 @@ export function OfferForm({ account, onCreated }: { account: Account; onCreated:
       <div className="card-head">
         <div>
           <h2>New offer</h2>
-          <p className="muted">The candidate signs in this app first, then the hiring manager countersigns by email.</p>
+          <p className="muted">Requires candidate and hiring manager signatures.</p>
         </div>
       </div>
       <label className="field">
@@ -77,7 +77,7 @@ export function OfferForm({ account, onCreated }: { account: Account; onCreated:
           {templates.map((t) => <option key={t.templateId} value={t.templateId}>Template: {t.name}</option>)}
         </select>
       </label>
-      {templates.length === 0 && <p className="muted small">No templates yet. Save a remote-signing template in Twala to send from it here.</p>}
+      {templates.length === 0 && <p className="muted small">No templates yet. Create one in Twala.</p>}
       {template && (
         <div className="notice">
           <div className="small"><strong>{template.name}</strong> · {template.documents?.map((d) => d.name).join(', ')}</div>

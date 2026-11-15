@@ -22,7 +22,7 @@ export function AccountPanel({ account }: { account: Account }) {
         <div>
           <h2>{app.name}</h2>
           <p className="muted">
-            Demo app · Sends as {sender.name} · {sender.email}
+            {sender.email}
           </p>
         </div>
         <span className={`pill ${mode === 'test' ? 'pill-warn' : 'pill-ok'}`}>{mode === 'test' ? 'Test mode' : 'Live'}</span>
