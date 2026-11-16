@@ -17,9 +17,11 @@ if (keyMode === 'live' && process.env.ALLOW_LIVE_KEY !== 'true') {
 
 export const config = {
   port: Number(process.env.PORT ?? 3180),
+  appUrl: (process.env.APP_URL ?? 'http://localhost:5180').replace(/\/+$/, ''),
   apiBase: (process.env.TWALA_API_BASE ?? 'https://api-stage.twala.ai/api/v1').replace(/\/+$/, ''),
   apiKey,
   keyMode,
   maskedKey: apiKey && `${apiKey.slice(0, 9)}…${apiKey.slice(-4)}`,
   logLimit: Number(process.env.API_LOG_LIMIT ?? 200),
+  webhookSecret: process.env.TWALA_WEBHOOK_SECRET?.trim() || undefined,
 };

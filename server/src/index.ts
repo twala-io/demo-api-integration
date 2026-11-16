@@ -1,14 +1,19 @@
 import express, { type ErrorRequestHandler } from 'express';
 import { config } from './config.js';
 import { clear, recent, subscribe } from './apiLog.js';
+import { events, webhooks } from './events.js';
+import { offers } from './offers.js';
+import { requirements, timestamps } from './requirements.js';
+import { templates } from './templates.js';
 import { TwalaApiError, twala } from './twala/client.js';
 import type { Status } from '../../shared/types.js';
 
 const app = express();
+app.use('/webhooks/twala', webhooks);
 app.use(express.json({ limit: '30mb' }));
 
 app.get('/api/status', async (_req, res) => {
-  const status: Status = { apiBase: config.apiBase, keyMode: config.keyMode, key: config.maskedKey, reachable: false, keyError: null, account: null };
+  const status: Status = { apiBase: config.apiBase, keyMode: config.keyMode, key: config.maskedKey, reachable: false, keyError: null, account: null, webhooks: !!config.webhookSecret };
   try {
     const { data, error, response } = await twala.GET('/account');
     status.reachable = true;
@@ -17,6 +22,12 @@ app.get('/api/status', async (_req, res) => {
   } catch {}
   res.json(status);
 });
+
+app.use('/api/offers/:id/requirements', requirements);
+app.use('/api/offers', offers);
+app.use('/api/timestamps', timestamps);
+app.use('/api/events', events);
+app.use('/api/templates', templates);
 
 app.get('/api/log', (_req, res) => {
   res.json(recent());
