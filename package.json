@@ -9,6 +9,8 @@
     "dev:server": "tsx watch --env-file-if-exists=.env server/src/index.ts",
     "dev:web": "vite",
     "build": "vite build",
+    "build:server": "tsc -p server --noEmit false --outDir dist --rootDir .",
+    "start": "node dist/server/src/index.js",
     "typecheck": "tsc -p server && tsc -p web",
     "gen:api": "node --env-file-if-exists=.env scripts/gen-api.mjs",
     "tunnel": "cloudflared tunnel --no-autoupdate --url http://localhost:3180"

@@ -1,0 +1,60 @@
+# docker compose up --build              app on http://localhost:5180
+# docker compose up --build --watch dev  same address, reloads on code changes
+# add the tunnel service to either one to receive webhooks (see README)
+
+x-app: &app
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    # The container port is fixed; the address you open is set by `ports`.
+    PORT: "3180"
+  networks:
+    default:
+      aliases: [server]
+
+services:
+  app:
+    <<: *app
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "5180:3180"
+    restart: unless-stopped
+
+  dev:
+    <<: *app
+    profiles: [dev]
+    build:
+      context: .
+      target: dev
+    ports:
+      - "5180:5180"
+    develop:
+      watch:
+        - action: sync
+          path: ./server
+          target: /app/server
+        - action: sync
+          path: ./web
+          target: /app/web
+          ignore:
+            - dist/
+        - action: sync
+          path: ./shared
+          target: /app/shared
+        - action: sync+restart
+          path: ./vite.config.ts
+          target: /app/vite.config.ts
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./package-lock.json
+
+  # Public HTTPS address for Twala webhooks. Forwards to whichever of app or
+  # dev is running; the address is printed in `docker compose logs tunnel`.
+  tunnel:
+    image: cloudflare/cloudflared:2026.10.7
+    profiles: [tunnel]
+    command: tunnel --url http://server:3180

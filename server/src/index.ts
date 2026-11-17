@@ -1,4 +1,6 @@
 import express, { type ErrorRequestHandler } from 'express';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { config } from './config.js';
 import { clear, recent, subscribe } from './apiLog.js';
 import { events, webhooks } from './events.js';
@@ -47,6 +49,11 @@ app.get('/api/log/stream', (req, res) => {
     unsubscribe();
   });
 });
+
+// When the UI has been built (as in the Docker image), serve it from here too.
+// In development Vite serves the UI and proxies /api to this server.
+const webDist = resolve('web/dist');
+if (existsSync(webDist)) app.use(express.static(webDist));
 
 app.use(((err, _req, res, _next) => {
   if (err instanceof TwalaApiError) {

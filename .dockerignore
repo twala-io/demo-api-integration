@@ -1,0 +1,12 @@
+# Secrets stay out of images; compose.yaml passes .env at run time.
+.env
+.env.*
+
+node_modules/
+dist/
+web/dist/
+.git/
+docs/
+*.log
+Dockerfile
+compose.yaml
