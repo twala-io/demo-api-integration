@@ -21,7 +21,6 @@ services:
       target: runtime
     ports:
       - "5180:3180"
-    restart: unless-stopped
 
   dev:
     <<: *app

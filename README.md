@@ -32,38 +32,65 @@ holds the key and makes every call.
 
 ## Running it
 
-Requires Node 22 or later.
+Requires Docker with Compose. You don't need Node on your machine.
 
 ```bash
-cp .env.example .env     # then paste a test key into TWALA_API_KEY
-npm install
-npm run dev              # server on :3180, UI on http://localhost:5180
+cp .env.example .env              # then paste a test key into TWALA_API_KEY
+docker compose up --build         # http://localhost:5180
 ```
+
+This builds the UI and runs one container that serves the UI and the API.
+`.env` is read when the container starts and is never copied into the image.
+After you edit `.env`, run the same command again.
+
+To work on the code, run the `dev` service instead. It runs the server and
+Vite with reload, and Compose syncs your edits into the container:
+
+```bash
+docker compose up --build --watch dev     # http://localhost:5180
+```
+
+Changes to `package.json` or `package-lock.json` rebuild the image.
 
 ### Webhooks (optional)
 
 Twala only delivers webhooks to a public HTTPS address, so expose the app
 server with a tunnel:
 
-1. Run `npm run tunnel` in a second terminal and copy the
-   `https://….trycloudflare.com` address it prints.
+1. Add the `tunnel` service to your command, for example
+   `docker compose up --build app tunnel` (or `--watch dev tunnel`). Copy the
+   `https://….trycloudflare.com` address it prints. To find it again, run
+   `docker compose logs tunnel`.
 2. In Twala: **Apps** → your App → **Webhook endpoints** → add
    `<tunnel address>/webhooks/twala` in **Test** mode, for all events.
 3. Copy the endpoint's signing secret into `.env` as `TWALA_WEBHOOK_SECRET`,
-   then restart `npm run dev`.
+   then run the command again.
 
 A quick tunnel gets a new address each time it starts, so update the endpoint
 in Twala when you restart it. Without webhooks, the **Activity** feed still
 lists every event from `GET /events`; click **Refresh** to catch up.
 
-Other scripts:
+Other tasks:
 
-| Script | Does |
+| Command | Does |
 | --- | --- |
-| `npm run gen:api` | Regenerate API types from the OpenAPI document |
-| `npm run typecheck` | Type-check the server and the UI |
-| `npm run build` | Build the UI into `web/dist` |
-| `npm run tunnel` | Expose the app server on a public HTTPS address for webhooks |
+| `docker compose exec dev npm run typecheck` | Type-check the server and the UI (while `dev` runs) |
+| `docker compose run --rm -v ./server/src/twala:/app/server/src/twala dev npm run gen:api` | Regenerate API types from the OpenAPI document |
+| `docker compose down` | Stop and remove the containers |
+
+### Without Docker
+
+Requires Node 22 or later.
+
+```bash
+npm install
+npm run dev              # server on :3180, UI on http://localhost:5180
+npm run tunnel           # in a second terminal, for webhooks
+```
+
+`npm run build` builds the UI into `web/dist`, `npm run build:server` compiles
+the server into `dist`, and `npm start` runs the compiled server, which also
+serves the built UI.
 
 ## Build phases
 
