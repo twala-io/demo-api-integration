@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import createClient from 'openapi-fetch';
 import { config } from '../config.js';
 import { clip, pickHeaders, record } from '../apiLog.js';
-import type { components, paths } from './schema.js';
+import type { components } from './schema.js';
 
 type ApiErrorOutput = components['schemas']['ApiErrorOutput'];
 
@@ -90,19 +89,4 @@ export async function twalaFetch(input: Request): Promise<Response> {
     if (!response) throw new TwalaApiError(0, 'network_error', networkError!);
     return response;
   }
-}
-
-export const twala = createClient<paths>({ baseUrl: config.apiBase, fetch: twalaFetch });
-
-export async function unwrap<D>(pending: Promise<{ data?: D; error?: unknown; response: Response }>): Promise<D> {
-  const { data, error, response } = await pending;
-  if (response.ok) return data as D;
-  const body = (error ?? {}) as Partial<ApiErrorOutput>;
-  throw new TwalaApiError(
-    response.status,
-    body.code ?? 'unknown_error',
-    body.message ?? `Twala answered ${response.status}`,
-    body.requestId ?? response.headers.get('x-request-id'),
-    body.details,
-  );
 }

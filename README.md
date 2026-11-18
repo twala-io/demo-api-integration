@@ -1,34 +1,59 @@
-# Hiring desk
+# Twala API showcase
 
-A demo HR hiring desk built on the [Twala API](https://platform-stage.twala.ai/developer-guide).
-It covers every endpoint so we can test two things: whether the API works as
-documented, and how easy it is to integrate. The results are in
-[docs/dx-report.md](docs/dx-report.md), with phase-by-phase details in
-[docs/dx-findings.md](docs/dx-findings.md). For a step-by-step guide to every
-flow and the endpoints it calls, see
-[docs/hiring-desk-flows.pdf](docs/hiring-desk-flows.pdf).
+A small app that shows every [Twala API](https://platform-stage.twala.ai/developer-guide)
+endpoint, one feature per screen. Each screen lists the calls it makes, and
+the **API log** at the bottom shows every request and response. It works with
+a test key and one person: you.
+
+Findings about the API are in [docs/dx-report.md](docs/dx-report.md), with
+details in [docs/dx-findings.md](docs/dx-findings.md).
 
 ## How it fits together
 
 ```
 browser (React, :5180)  →  app server (Express, :3180)  →  Twala API
-                              holds the API key
+  typed client                holds the API key
                               logs every call
 ```
 
 Twala API keys are for servers only, and the API sends no CORS headers to
-other sites. So the browser never talks to Twala directly. The app server
-holds the key and makes every call.
+other sites. So the browser calls Twala's own paths on the app server, under
+`/api/twala`, and the server forwards them with the key.
 
-- `server/src/twala/client.ts` is a typed client generated from Twala's
-  OpenAPI document. It adds the `Authorization` header, adds an
+- `web/src/api.ts` is a client typed from Twala's OpenAPI document
+  (`server/src/twala/schema.d.ts`, regenerated with `npm run gen:api`). Each
+  screen calls it with Twala's real paths, such as
+  `twala.POST('/envelopes', …)`.
+- `server/src/proxy.ts` forwards only the 32 operations of the public API.
+- `server/src/twala/client.ts` adds the `Authorization` header, adds an
   `Idempotency-Key` to every `POST` and to `PATCH /envelopes/{id}`, retries
   only when retrying is safe, and records every attempt.
-- `server/src/twala/schema.d.ts` is generated. Regenerate it with
-  `npm run gen:api`, which reads `openapi.json` from `TWALA_API_BASE`.
-- The **API log** drawer at the bottom of the app shows each call with its
-  status, error `code`, `X-Request-ID`, rate-limit headers, idempotency key,
-  and request and response bodies.
+- `server/src/webhooks.ts` receives webhooks and checks their signatures.
+
+## Screens
+
+| Screen | Endpoints |
+| --- | --- |
+| Account | `GET /account` |
+| Envelopes | `POST /envelopes`, `GET /envelopes`, `GET /envelopes/{id}`, `PATCH /envelopes/{id}`, `DELETE /envelopes/{id}` |
+| Recipients | `GET`, `POST /envelopes/{id}/recipients`, `PATCH`, `DELETE /envelopes/{id}/recipients/{recipientId}` |
+| Documents | `GET`, `POST /envelopes/{id}/documents`, `GET`, `DELETE /envelopes/{id}/documents/{documentId}` |
+| Fields | `GET`, `PUT /envelopes/{id}/recipients/{recipientId}/fields` |
+| Templates | `GET /templates`, `GET /templates/{id}`, `POST /envelopes` with `templateId`. Templates are created in Twala; the API only reads and uses them. |
+| Embedded sending | `POST /envelopes/{id}/views/sender` |
+| Embedded signing | `POST /envelopes/{id}/views/recipient` |
+| Reminders and sealing | `POST /envelopes/{id}/reminders`, `POST /envelopes/{id}/sealing-attempts` |
+| Audit trail and form data | `GET /envelopes/{id}/audit-events`, `GET /envelopes/{id}/form-data` |
+| Timestamps | `POST /timestamps`, `GET /timestamps`, `GET /timestamps/{id}`, `GET /timestamps/{id}/audit-events`, `GET /timestamps/{id}/document`, `POST /timestamps/{id}/sealing-attempts` |
+| Events and webhooks | `GET /events`, `GET /events/{id}`, webhooks |
+
+### Using a test key
+
+A test key only emails the account's own address, and an envelope can't have
+two recipients with the same email. So the app makes you the first recipient,
+signing **embedded** (inside the app), and gives anyone else a placeholder
+email such as `signer2@example.com`, also embedded. It warns before a call
+Twala would refuse, and shows today's test usage at the top.
 
 ## Running it
 
@@ -91,18 +116,3 @@ npm run tunnel           # in a second terminal, for webhooks
 `npm run build` builds the UI into `web/dist`, `npm run build:server` compiles
 the server into `dist`, and `npm start` runs the compiled server, which also
 serves the built UI.
-
-## Build phases
-
-| # | Phase | Endpoints |
-| --- | --- | --- |
-| 0 | Scaffold: client, API log, config | `openapi.json` |
-| 1 | Account panel and credits | `GET /account` |
-| 2 | Send offer letter | `POST /envelopes`, `PATCH /envelopes/{id}`, `DELETE /envelopes/{id}` |
-| 3 | Candidate pipeline | `GET /envelopes`, envelope, recipients, documents, document download, audit events, form data |
-| 4 | Embedded signing and sending | `views/recipient`, `views/sender` |
-| 5 | Live status | `GET /events`, `GET /events/{id}`, webhooks |
-| 6 | Drafts and templates | add/remove documents and recipients, get/replace fields, templates |
-| 7 | Fixes and nudges | correct a recipient, reminders, void, expiry, metadata, sealing retries |
-| 8 | Pre-employment requirements | timestamps |
-| 9 | Developer-experience report | — |
