@@ -5,16 +5,16 @@ import { Json } from '../components/ApiLogDrawer';
 import { meRow, Problems, RecipientEditor } from '../components/RecipientEditor';
 import { dateTime } from '../format';
 import { recipientProblems, type RecipientRow } from '../rules';
-import { fileToBase64, samplePdf, slot } from '../sample';
+import { fileToBase64, slot } from '../pdf';
 import { Card, randomId, Section, Status, useAction, useApp, useLoad } from '../ui';
 
 const DOC = 'doc-1';
 const FILTERS = [
   { name: 'All', status: '' },
   { name: 'Draft', status: 'draft' },
-  { name: 'Awaiting', status: 'pending,in_progress' },
+  { name: 'Pending', status: 'pending,in_progress' },
   { name: 'Completed', status: 'completed' },
-  { name: 'Closed', status: 'declined,voided,expired,sealing_failed' },
+  { name: 'Voided', status: 'voided' },
 ];
 
 // Each signer gets a signature and a date field in their own slot on page 1.
@@ -49,7 +49,7 @@ function CreateEnvelope() {
     e.preventDefault();
     const status = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'sent' ? 'sent' : 'draft';
     run(async () => {
-      const documentBase64 = file ? await fileToBase64(file) : await samplePdf(name, rows.map((r) => r.name));
+      const documentBase64 = await fileToBase64(file!);
       const created = await call(
         twala.POST('/envelopes', {
           body: {
@@ -57,7 +57,7 @@ function CreateEnvelope() {
             message,
             status,
             metadata: { source: 'api-showcase' },
-            documents: [{ documentId: DOC, name: file?.name ?? 'Sample.pdf', documentBase64 }],
+            documents: [{ documentId: DOC, name: file!.name, documentBase64 }],
             recipients: toRecipients(rows, DOC),
           },
         }),
@@ -76,8 +76,8 @@ function CreateEnvelope() {
           <label className="field"><span>Message to recipients</span><input value={message} onChange={(e) => setMessage(e.target.value)} /></label>
           <label className="field">
             <span>Document</span>
-            <input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-            <span className="muted">{file ? file.name : 'Leave empty to use a generated sample PDF.'}</span>
+            <input type="file" accept="application/pdf" required onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+            <span className="muted">PDF, signature fields go on page 1.</span>
           </label>
         </div>
         <div>
@@ -88,13 +88,15 @@ function CreateEnvelope() {
         <Problems items={problems.send} />
         <ErrorNotice error={error} />
         <div className="actions">
-          <button className="btn" value="draft" disabled={busy || problems.create.length > 0}>Save as draft</button>
-          <button className="btn btn-primary" value="sent" disabled={busy || problems.send.length > 0}>{busy ? 'Working…' : 'Create and send'}</button>
+          <button className="btn" value="draft" disabled={busy || !file || problems.create.length > 0}>Save as draft</button>
+          <button className="btn btn-primary" value="sent" disabled={busy || !file || problems.send.length > 0}>{busy ? 'Working…' : 'Create and send'}</button>
         </div>
       </form>
     </Card>
   );
 }
+
+const count = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 function EnvelopeList() {
   const { envelopeId, selectEnvelope, version } = useApp();
@@ -117,7 +119,7 @@ function EnvelopeList() {
       <div className="rows">
         {data?.items.map((e) => (
           <button key={e.envelopeId} className={`row ${envelopeId === e.envelopeId ? 'row-on' : ''}`} onClick={() => selectEnvelope(e.envelopeId)}>
-            <span><strong>{e.name ?? 'Untitled'}</strong> <span className="muted small">· {(e.recipients.signers?.length ?? 0) + (e.recipients.approvers?.length ?? 0) + (e.recipients.viewers?.length ?? 0)} recipients</span></span>
+            <span><strong>{e.name ?? 'Untitled'}</strong> <span className="muted small">· {count((e.recipients.signers?.length ?? 0) + (e.recipients.approvers?.length ?? 0) + (e.recipients.viewers?.length ?? 0), 'recipient')}</span></span>
             <span className="muted small">{dateTime(e.createdAt)}</span>
             <Status value={e.status} />
           </button>
@@ -139,6 +141,7 @@ function EnvelopeDetail({ id }: { id: string }) {
   const { data: e, error: loadError, reload } = useLoad(() => call(twala.GET('/envelopes/{envelope_id}', { params: { path: { envelope_id: id } } })), [id, version]);
   const { run, busy, error } = useAction();
   const [edit, setEdit] = useState<{ name: string; message: string; expires: string } | null>(null);
+  const [voiding, setVoiding] = useState<string | null>(null);
   const path = { params: { path: { envelope_id: id } } };
   const patch = (body: EnvelopeUpdate) =>
     run(async () => {
@@ -201,9 +204,22 @@ function EnvelopeDetail({ id }: { id: string }) {
           </>
         )}
         {active && (
-          <button className="btn" disabled={busy} onClick={() => { const reason = window.prompt('Reason for voiding?'); if (reason !== null) patch({ status: 'voided', voidedReason: reason || null }); }}>Void</button>
+          <button className="btn" disabled={busy} onClick={() => setVoiding('')}>Void</button>
         )}
       </div>
+      {voiding !== null && (
+        <dialog className="modal" ref={(d) => { if (d && !d.open) d.showModal(); }} onClose={() => setVoiding(null)}>
+          <form className="stack" onSubmit={(ev) => (ev.preventDefault(), patch({ status: 'voided', voidedReason: voiding || null }), setVoiding(null))}>
+            <h3>Void this envelope?</h3>
+            <p className="muted small">Recipients can no longer sign it. This can't be undone.</p>
+            <label className="field"><span>Reason (optional, shown to recipients)</span><input autoFocus value={voiding} onChange={(ev) => setVoiding(ev.target.value)} placeholder="e.g. Sent by mistake" /></label>
+            <div className="actions">
+              <button type="button" className="btn" onClick={() => setVoiding(null)}>Cancel</button>
+              <button className="btn btn-danger">Void envelope</button>
+            </div>
+          </form>
+        </dialog>
+      )}
       <details><summary className="small">Response of GET /envelopes/{'{id}'}</summary><Json value={e} /></details>
     </Card>
   );

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { call, twala } from '../api';
 import { ErrorNotice } from '../components/ErrorNotice';
-import { fileToBase64, samplePdf } from '../sample';
+import { fileToBase64 } from '../pdf';
 import { Card, EnvelopePicker, download, randomId, Section, useAction, useApp, useLoad } from '../ui';
 
 export function DocumentsSection() {
@@ -20,8 +20,8 @@ export function DocumentsSection() {
 
   const add = () =>
     run(async () => {
-      const documentBase64 = file ? await fileToBase64(file) : await samplePdf('Extra document', []);
-      await call(twala.POST('/envelopes/{envelope_id}/documents', { params: { path: { envelope_id: envelopeId! } }, body: { documents: [{ documentId: randomId('doc'), name: file?.name ?? 'Extra.pdf', documentBase64 }] } }));
+      const documentBase64 = await fileToBase64(file!);
+      await call(twala.POST('/envelopes/{envelope_id}/documents', { params: { path: { envelope_id: envelopeId! } }, body: { documents: [{ documentId: randomId('doc'), name: file!.name, documentBase64 }] } }));
       setFile(null);
       done();
     });
@@ -50,8 +50,8 @@ export function DocumentsSection() {
           ))}
           {isDraft && (
             <div className="inline-form">
-              <input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-              <button className="btn" disabled={busy} onClick={add}>{file ? 'Add this PDF' : 'Add a sample PDF'}</button>
+              <input key={docs.data?.length} type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+              <button className="btn" disabled={busy || !file} onClick={add}>Add PDF</button>
             </div>
           )}
           <p className="muted small">Download asks Twala for a short-lived link to the file, then follows it.</p>
