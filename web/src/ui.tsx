@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { call, twala, type Account, type Envelope } from './api';
 import { ErrorNotice } from './components/ErrorNotice';
 import { dateTime, label, STATUS_TONE } from './format';
@@ -66,14 +66,16 @@ export function useAction() {
 
 export const Status = ({ value }: { value: string }) => <span className={`pill ${STATUS_TONE[value] ?? ''}`}>{label(value)}</span>;
 
-// Loads whenever `deps` change and exposes a reload.
+// Loads whenever `deps` change and exposes a reload; only the latest request's result is kept.
 export function useLoad<T>(load: (() => Promise<T>) | null, deps: unknown[]) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const latest = useRef(0);
   const reload = useCallback(() => {
+    const id = ++latest.current;
     if (!load) return setData(null);
     setError(null);
-    load().then(setData, setError);
+    load().then((d) => id === latest.current && setData(d), (e) => id === latest.current && setError(e));
   }, deps);
   useEffect(reload, [reload]);
   return { data, error, reload, setData };

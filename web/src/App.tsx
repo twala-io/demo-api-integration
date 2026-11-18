@@ -49,7 +49,7 @@ export function App() {
   const [status, setStatus] = useState<Status | null>(null);
   const [account, setAccount] = useState<Account | null>(null);
   const [accountError, setAccountError] = useState<unknown>(null);
-  const [envelopeId, setEnvelopeId] = useState<string | null>(returned?.envelopeId ?? stored());
+  const [envelopeId, setEnvelopeId] = useState<string | null>(returned?.envelopeId || stored());
   const [banner, setBanner] = useState(returned);
   const [version, setVersion] = useState(0);
 
