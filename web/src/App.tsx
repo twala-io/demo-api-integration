@@ -81,6 +81,14 @@ export function App() {
   const changed = useCallback(() => setVersion((v) => v + 1), []);
   useEffect(() => onStream((event) => event.type === 'webhook' && (changed(), refreshAccount())), [changed, refreshAccount]);
 
+  // The menu sits right under the pinned top bar, whose height changes with the window.
+  useEffect(() => {
+    const bar = document.querySelector<HTMLElement>('.topbar');
+    if (!bar) return;
+    const observer = new ResizeObserver(() => document.documentElement.style.setProperty('--topbar', `${bar.offsetHeight}px`));
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, []);
   // On phones the menu is one sideways row, so keep the current screen in view.
   useEffect(() => { document.querySelector('.nav-on')?.scrollIntoView({ block: 'nearest', inline: 'center' }); }, [section]);
   const current = SECTIONS.find((s) => s.id === section)!;
