@@ -2,6 +2,14 @@ import { call, twala } from '../api';
 import { ErrorNotice } from '../components/ErrorNotice';
 import { Card, EnvelopePicker, Section, Status, useAction, useApp, useLoad } from '../ui';
 
+const CLOSED: Record<string, string> = {
+  sealing: 'Everyone has signed.',
+  completed: 'Everyone has signed.',
+  declined: 'A recipient declined, so no one else can sign.',
+  voided: 'The sender voided this envelope.',
+  expired: 'This envelope expired before everyone signed.',
+};
+
 const returnUrl = (section: string) => `${window.location.origin}/?section=${section}`;
 
 export function EmbeddedSendingSection() {
@@ -62,7 +70,7 @@ export function EmbeddedSigningSection() {
       <EnvelopePicker filter={(x) => ['pending', 'in_progress'].includes(x.status)} hint="sent envelopes" />
       {e && (
         <Card title={e.name ?? 'Untitled'} actions={<Status value={e.status} />}>
-          {!active && <p className="notice small">Only sent envelopes awaiting signature can be signed.</p>}
+          {!active && <p className="notice small">{CLOSED[e.status] ?? 'Only sent envelopes awaiting signature can be signed.'}</p>}
           <ol className="recipients">
             {people.map((r) => {
               const turn = active && r.deliveryMethod === 'embedded' && ['notified', 'opened'].includes(r.status);
