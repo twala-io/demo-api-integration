@@ -64,7 +64,7 @@ function UseTemplate({ template }: { template: Template }) {
 
   return (
     <Card title={template.name}>
-      <p className="muted small mono">{template.templateId} · {template.documents?.map((d) => `${d.name} (${d.pageCount ?? '?'} p)`).join(', ')}</p>
+      <p className="muted small mono">{template.templateId} · {template.documents?.map((d) => d.pageCount ? `${d.name} (${d.pageCount} p)` : d.name).join(', ')}</p>
       <table className="table">
         <thead><tr><th>#</th><th>Role</th><th>Type</th><th>Fields</th><th>Needs</th></tr></thead>
         <tbody>
@@ -105,7 +105,7 @@ export function TemplatesSection() {
   return (
     <Section
       title="Templates"
-      intro="List the account's templates, read one with its roles and fields, and create an envelope from it."
+      intro="Templates are created in Twala, not through the API. This screen lists them, reads one with its roles and fields, and creates an envelope from it."
       calls={['GET /templates', 'GET /templates/{id}?include=fields', 'POST /envelopes (templateId)']}
       limits="only remote-signing templates are listed. You can fill at most one role yourself; roles needing an account or ID check must be you."
     >

@@ -39,7 +39,7 @@ other sites. So the browser calls Twala's own paths on the app server, under
 | Recipients | `GET`, `POST /envelopes/{id}/recipients`, `PATCH`, `DELETE /envelopes/{id}/recipients/{recipientId}` |
 | Documents | `GET`, `POST /envelopes/{id}/documents`, `GET`, `DELETE /envelopes/{id}/documents/{documentId}` |
 | Fields | `GET`, `PUT /envelopes/{id}/recipients/{recipientId}/fields` |
-| Templates | `GET /templates`, `GET /templates/{id}`, `POST /envelopes` with `templateId` |
+| Templates | `GET /templates`, `GET /templates/{id}`, `POST /envelopes` with `templateId`. Templates are created in Twala; the API only reads and uses them. |
 | Embedded sending | `POST /envelopes/{id}/views/sender` |
 | Embedded signing | `POST /envelopes/{id}/views/recipient` |
 | Reminders and sealing | `POST /envelopes/{id}/reminders`, `POST /envelopes/{id}/sealing-attempts` |
