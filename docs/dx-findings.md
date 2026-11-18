@@ -1,6 +1,7 @@
 # Twala API: developer-experience findings
 
-Notes collected while building the hiring desk demo, phase by phase. Each entry
+Notes collected while building the hiring desk demo, phase by phase, and then
+the API showcase that replaced it. Each entry
 says what we hit, why it matters to an integrator, and a suggested fix.
 
 Severity: **Bug** (doesn't work as documented) · **Gap** (missing or unclear
@@ -378,3 +379,116 @@ timestamp above made one possible: `POST /timestamps/{id}/sealing-attempts`
 answered `202 {"status": "sealing"}` and the seal completed. The envelope
 version (`POST /envelopes/{id}/sealing-attempts`) is still only tested for its
 refusal.
+
+## API showcase rebuild
+
+The hiring desk was replaced by one screen per API feature, built for a single
+person on a test key. Every flow was run on stage, including embedded sending,
+embedded signing (sign, finish later, decline) and live webhooks.
+
+### Bug: saving in the embedded editor wipes the API's ids and makes embedded recipients email ones
+
+A draft created through the API with `recipientId: "signer-1"`, a
+`clientUserId` and `documentId: "doc-1"` was opened with
+`POST /envelopes/{id}/views/sender`, a field was moved, and **Save and close**
+was clicked. Afterwards:
+
+| | Before the editor | After **Save and close** |
+| --- | --- | --- |
+| `recipientId` | `signer-1` | `null` |
+| `clientUserId` | set | `null` |
+| `deliveryMethod` | `embedded` | `email` |
+| `documentId` | `doc-1` | `null` |
+
+An integrator who stored their own ids can no longer use them
+(`GET /envelopes/{id}/recipients/signer-1/fields` stops working), and the
+recipient silently changes from signing in the integrator's app to signing by
+email. On a test key that only works because the recipient is the account
+owner.
+
+Suggested fix: keep `recipientId`, `clientUserId`, `deliveryMethod` and
+`documentId` when the editor saves a draft it didn't change those for.
+
+### Bug: on stage, "notified" recipients get no email
+
+After sending (from the editor, from a template, and with
+`POST /envelopes/{id}/reminders`), the recipient showed `status: notified`
+with a `notifiedAt` time, `recipient.notified` was in `GET /events`, and the
+reminder answered `remindedRecipientIds: ["role-1"]`. No email arrived, not
+even in spam. The guide says test keys send real emails ("test mode is how you
+rehearse the whole flow, emails included"), so on stage anything delivered by
+email can't be tested end to end.
+
+Suggested fix: confirm whether stage sends email at all; if not, say so in the
+guide or show a "not delivered on stage" note.
+
+### Gap: the stage website is behind a password
+
+`platform-stage.twala.ai` answers every page, including
+`/embedded/signing`, `/embedded/sending` and the developer guide, with
+`401` and HTTP Basic authentication. The API at `api-stage.twala.ai` is open,
+so an integrator can create a link with `views/recipient` or `views/sender`
+but can't open it without the site password.
+
+Suggested fix: leave the embedded pages and the developer guide open on stage,
+or document how integrators get access.
+
+### Bug: production CORS still refuses `X-Embedded-Session`
+
+The fix that lets the embedded pages send `X-Embedded-Session` across origins
+is on staging but not yet on production, so embedded signing and sending fail
+on `api.twala.ai`, where real integrations run.
+
+Suggested fix: promote the CORS fix to production.
+
+### Friction: templates return `pageCount: null` for their documents
+
+`GET /templates/{id}` lists `documents: [{"name": "a.pdf", "pageCount": null}]`.
+An integrator can't show a page count or check a field's page number against
+it before creating an envelope.
+
+Suggested fix: fill in `pageCount` when the template's PDF is processed.
+
+### Resolved: template list and role shapes (see Phase 6)
+
+With a real template in the account: `GET /templates` items have only
+`templateId`, `name`, `createdAt` and `updatedAt`, and a role's kind is `type`.
+Both match the OpenAPI document, so it's the docs (`shared`, `documents`,
+`roles` on list items; `roleType`) that need correcting.
+
+### Friction: a voided envelope's recipients stay "notified"
+
+After `PATCH /envelopes/{id}` with `status: voided`, the envelope is `voided`
+but its recipients keep `status: notified`. An integrator showing per-recipient
+status shows people as still waiting to sign.
+
+Suggested fix: move recipients who hadn't finished to a `voided` status, or
+document that recipient status freezes when an envelope is voided.
+
+### Friction: audit events with the same time come back in a different order
+
+`GET /envelopes/{id}/audit-events` for a declined envelope listed
+`recipient.notified` before `envelope.created`, because both have the same
+`occurredAt`. Embedded recipients also get `recipient.notified` events even
+though nothing is sent to them.
+
+Suggested fix: break ties in a stable order (by sequence), and either skip
+`recipient.notified` for embedded recipients or describe what it means for
+them.
+
+### Good: test-key rules are enforced exactly and explained
+
+Every refusal the showcase checks before sending matched Twala's own:
+another person by email (`test_recipient_not_allowed`), the same email twice
+(`duplicate_recipient_email`), and an embedded recipient in a role that needs
+a Twala account (`embedded_recipient_conflict`). The messages say what to do,
+which made single-person defaults easy to build: you by email or embedded,
+everyone else embedded with a placeholder email.
+
+### Good: embedded signing, return events and webhooks work end to end
+
+Two embedded signers signed in order; **Finish later** returned `event=cancel`
+with the envelope still pending; **Decline** returned `event=decline` with the
+reason in the audit trail. Through a tunnel, the test ping and
+`timestamp.completed` arrived signed and verified, matching `GET /events`.
+
