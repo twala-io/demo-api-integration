@@ -74,6 +74,10 @@ export function App() {
       else localStorage.removeItem(STORED);
     } catch {}
   }, []);
+  // Forget a remembered envelope that this key can't see, e.g. after switching accounts.
+  useEffect(() => {
+    if (envelopeId) twala.GET('/envelopes/{envelope_id}', { params: { path: { envelope_id: envelopeId } } }).then(({ response }) => response.status === 404 && selectEnvelope(null));
+  }, []);
   const changed = useCallback(() => setVersion((v) => v + 1), []);
   useEffect(() => onStream((event) => event.type === 'webhook' && (changed(), refreshAccount())), [changed, refreshAccount]);
 
