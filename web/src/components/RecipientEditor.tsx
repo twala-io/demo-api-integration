@@ -14,9 +14,9 @@ export const newRow = (n: number): RecipientRow => ({ group: 'signers', name: `S
 
 export const meRow = (account: Account): RecipientRow => ({ group: 'signers', name: account.sender.name, email: account.sender.email, embedded: true });
 
-type Props = { rows: RecipientRow[]; onChange: (rows: RecipientRow[]) => void; account: Account; labels?: string[]; single?: boolean };
+type Props = { rows: RecipientRow[]; onChange: (rows: RecipientRow[]) => void; account: Account; labels?: string[]; single?: boolean; start?: number };
 
-export function RecipientEditor({ rows, onChange, account, labels, single }: Props) {
+export function RecipientEditor({ rows, onChange, account, labels, single, start = 1 }: Props) {
   const fixed = !!labels || single;
   const set = (i: number, patch: Partial<RecipientRow>) =>
     onChange(rows.map((r, j) => {
@@ -28,7 +28,7 @@ export function RecipientEditor({ rows, onChange, account, labels, single }: Pro
     <div className="recipient-rows">
       {rows.map((r, i) => (
         <div key={i} className="recipient-row">
-          <span className="muted small order">{i + 1}</span>
+          <span className="muted small order">{start + i}</span>
           {labels ? <span className="small role-label">{labels[i]}</span> : (
             <select value={r.group} onChange={(e) => set(i, { group: e.target.value as Group })}>
               {GROUPS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}

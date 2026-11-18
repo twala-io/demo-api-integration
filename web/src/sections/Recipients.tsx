@@ -3,7 +3,7 @@ import { call, twala, type Recipient } from '../api';
 import { ErrorNotice } from '../components/ErrorNotice';
 import { canEmbed, newRow, Problems, RecipientEditor } from '../components/RecipientEditor';
 import { recipientProblems, type RecipientRow } from '../rules';
-import { slot } from '../sample';
+import { slot } from '../pdf';
 import { Card, EnvelopePicker, randomId, Section, Status, useAction, useApp, useLoad } from '../ui';
 
 function Row({ envelopeId, r, status, reload }: { envelopeId: string; r: Recipient; status: string; reload: () => void }) {
@@ -63,7 +63,7 @@ function AddRecipient({ envelopeId, existing, reload }: { envelopeId: string; ex
   return (
     <form className="stack" onSubmit={submit}>
       <h4>Add a recipient</h4>
-      <RecipientEditor rows={rows} onChange={setRows} account={account!} single />
+      <RecipientEditor rows={rows} onChange={setRows} account={account!} single start={existing.length + 1} />
       <p className="muted small">A new signer gets a signature field on the first document (<code>doc-1</code>), page 1.</p>
       <Problems items={problems.create} />
       <ErrorNotice error={error} />
