@@ -63,7 +63,7 @@ function AddRecipient({ envelopeId, existing, reload }: { envelopeId: string; ex
   return (
     <form className="stack" onSubmit={submit}>
       <h4>Add a recipient</h4>
-      <RecipientEditor rows={rows} onChange={setRows} account={account!} single start={existing.length + 1} />
+      <RecipientEditor rows={rows} onChange={setRows} single start={existing.length + 1} />
       <p className="muted small">A new signer gets a signature field on the first document (<code>doc-1</code>), page 1.</p>
       <Problems items={problems.create} />
       <ErrorNotice error={error} />

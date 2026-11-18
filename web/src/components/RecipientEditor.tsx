@@ -14,9 +14,11 @@ export const newRow = (n: number): RecipientRow => ({ group: 'signers', name: `S
 
 export const meRow = (account: Account): RecipientRow => ({ group: 'signers', name: account.sender.name, email: account.sender.email, embedded: true });
 
-type Props = { rows: RecipientRow[]; onChange: (rows: RecipientRow[]) => void; account: Account; labels?: string[]; single?: boolean; start?: number };
+const ICON = { viewBox: '0 0 24 24', width: 15, height: 15, fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, 'aria-hidden': true };
 
-export function RecipientEditor({ rows, onChange, account, labels, single, start = 1 }: Props) {
+type Props = { rows: RecipientRow[]; onChange: (rows: RecipientRow[]) => void; labels?: string[]; single?: boolean; start?: number };
+
+export function RecipientEditor({ rows, onChange, labels, single, start = 1 }: Props) {
   const fixed = !!labels || single;
   const set = (i: number, patch: Partial<RecipientRow>) =>
     onChange(rows.map((r, j) => {
@@ -40,10 +42,13 @@ export function RecipientEditor({ rows, onChange, account, labels, single, start
             <option value="embedded">Embedded (signs in this app)</option>
             <option value="email">By email</option>
           </select>
-          <button type="button" className="link small" onClick={() => set(i, { email: account.sender.email, name: account.sender.name })}>Use me</button>
-          {!fixed && rows.length > 1 && (
-            <button type="button" className="link small" onClick={() => onChange(rows.filter((_, j) => j !== i))}>Remove</button>
-          )}
+          <span className="row-tools">
+            {!fixed && rows.length > 1 && (
+              <button type="button" className="icon-btn" title="Remove recipient" aria-label="Remove recipient" onClick={() => onChange(rows.filter((_, j) => j !== i))}>
+                <svg {...ICON}><path d="M6 6l12 12M18 6L6 18" /></svg>
+              </button>
+            )}
+          </span>
         </div>
       ))}
       {!fixed && (

@@ -344,3 +344,4 @@ input[type='file']::file-selector-button { margin-right: 10px; padding: 4px 12px
 .icon-btn { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
 .icon-btn:hover { color: var(--text); background: var(--hover); }
 .picker > .link { display: flex; align-items: center; height: 34px; }
+.row-tools { display: flex; width: 30px; } .row-tools .icon-btn { width: 30px; height: 30px; }

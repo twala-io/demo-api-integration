@@ -83,7 +83,7 @@ function UseTemplate({ template }: { template: Template }) {
         <label className="field"><span>Envelope name</span><input required value={name} onChange={(e) => setName(e.target.value)} /></label>
         <div>
           <h4>Who fills each role</h4>
-          <RecipientEditor rows={rows} onChange={setRows} account={account!} labels={roles.map((r) => r.roleName ?? label(r.type))} />
+          <RecipientEditor rows={rows} onChange={setRows} labels={roles.map((r) => r.roleName ?? label(r.type))} />
           <p className="muted small">Roles that need a Twala account or an ID check, and viewers, can't be embedded, so they get email. On a test key only you can get email.</p>
         </div>
         <Problems items={problems.send} />

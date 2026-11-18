@@ -82,7 +82,7 @@ function CreateEnvelope() {
         </div>
         <div>
           <h4>Recipients, in signing order</h4>
-          <RecipientEditor rows={rows} onChange={setRows} account={account!} />
+          <RecipientEditor rows={rows} onChange={setRows} />
           <p className="muted small">Signers get a signature and a date field. Embedded recipients sign in the Embedded signing section.</p>
         </div>
         <Problems items={problems.send} />
