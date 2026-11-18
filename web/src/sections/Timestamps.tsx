@@ -2,16 +2,22 @@ import { useEffect, useState } from 'react';
 import { call, twala } from '../api';
 import { ErrorNotice } from '../components/ErrorNotice';
 import { dateTime, label } from '../format';
-import { fileToBase64, samplePdf } from '../sample';
+import { fileToBase64 } from '../pdf';
 import { Card, download, Section, Status, useAction, useApp, useLoad } from '../ui';
 
-function Detail({ id, onChanged }: { id: string; onChanged: () => void }) {
+function Detail({ id, tick, onChanged }: { id: string; tick: number; onChanged: () => void }) {
   const path = { params: { path: { timestamp_id: id } } };
-  const t = useLoad(() => call(twala.GET('/timestamps/{timestamp_id}', path)), [id]);
-  const history = useLoad(() => call(twala.GET('/timestamps/{timestamp_id}/audit-events', path)), [id]);
+  const t = useLoad(() => call(twala.GET('/timestamps/{timestamp_id}', path)), [id, tick]);
+  const history = useLoad(() => call(twala.GET('/timestamps/{timestamp_id}/audit-events', path)), [id, tick]);
   const { run, busy, error } = useAction();
-  const reload = () => (t.reload(), history.reload(), onChanged());
+  const reload = onChanged;
   const d = t.data;
+  // Checks back until sealing ends, since the list may finish polling first.
+  useEffect(() => {
+    if (d?.status !== 'sealing') return;
+    const timer = setTimeout(() => (t.reload(), history.reload()), 3000);
+    return () => clearTimeout(timer);
+  }, [d]);
   if (!d) return <Card><ErrorNotice error={t.error} /></Card>;
   return (
     <Card title={d.name} actions={<Status value={d.status} />}>
@@ -25,7 +31,7 @@ function Detail({ id, onChanged }: { id: string; onChanged: () => void }) {
       <div>
         <h4>History</h4>
         {history.data?.map((h, i) => (
-          <div key={i} className="line"><span className="small">{label(h.action)}</span><span className="muted small">{dateTime(h.occurredAt)}</span></div>
+          <div key={i} className="line"><span className="small">{label(h.action)}{Object.entries(h.details ?? {}).filter(([, v]) => v != null && v !== '').map(([k, v]) => <span key={k} className="muted"> · {label(k)}: {String(v)}</span>)}</span><span className="muted small">{dateTime(h.occurredAt)}</span></div>
         ))}
       </div>
       <ErrorNotice error={error ?? history.error} />
@@ -56,9 +62,7 @@ export function TimestampsSection() {
 
   const upload = () =>
     run(async () => {
-      const documents = files.length
-        ? await Promise.all(files.map(async (f) => ({ name: f.name, documentBase64: await fileToBase64(f), metadata: { source: 'api-showcase' } })))
-        : [{ name: 'Sample.pdf', documentBase64: await samplePdf('Timestamp sample', []), metadata: { source: 'api-showcase' } }];
+      const documents = await Promise.all(files.map(async (f) => ({ name: f.name, documentBase64: await fileToBase64(f), metadata: { source: 'api-showcase' } })));
       const created = await call(twala.POST('/timestamps', { body: { documents } }));
       setFiles([]);
       setSelected(created.timestamps[0]?.timestampId ?? null);
@@ -76,8 +80,8 @@ export function TimestampsSection() {
     >
       <Card title="Timestamp documents">
         <div className="inline-form">
-          <input type="file" accept="application/pdf" multiple onChange={(e) => setFiles([...(e.target.files ?? [])])} />
-          <button className="btn btn-primary" disabled={busy} onClick={upload}>{files.length ? `Timestamp ${files.length} PDF${files.length > 1 ? 's' : ''}` : 'Timestamp a sample PDF'}</button>
+          <input key={selected ?? ""} type="file" accept="application/pdf" multiple onChange={(e) => setFiles([...(e.target.files ?? [])])} />
+          <button className="btn btn-primary" disabled={busy || !files.length} onClick={upload}>{files.length > 1 ? `Timestamp ${files.length} PDFs` : 'Timestamp PDF'}</button>
         </div>
         <ErrorNotice error={error} />
       </Card>
@@ -102,7 +106,7 @@ export function TimestampsSection() {
             </div>
           )}
         </Card>
-        {selected && <Detail key={`${selected}-${tick}`} id={selected} onChanged={() => setTick((n) => n + 1)} />}
+        {selected && <Detail key={selected} id={selected} tick={tick} onChanged={() => setTick((n) => n + 1)} />}
       </div>
     </Section>
   );
