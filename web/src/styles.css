@@ -318,8 +318,10 @@ details summary { cursor: pointer; color: var(--muted); }
 details pre { margin-top: 8px; padding: 10px; background: var(--bg); border-radius: 8px; max-height: 40vh; overflow: auto; }
 
 @media (max-width: 860px) {
-  .layout { flex-direction: column; }
-  .sidebar { position: static; width: 100%; display: flex; flex-wrap: wrap; max-height: none; padding: 12px 16px 0; }
+  .layout { flex-direction: column; align-items: stretch; }
+  .sidebar { position: sticky; top: 0; z-index: 5; width: 100%; min-width: 0; display: flex; flex-wrap: nowrap; gap: 4px; max-height: none; padding: 8px 16px; overflow-x: auto; scrollbar-width: none; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .nav { flex-shrink: 0; white-space: nowrap; }
   .content { padding: 20px 16px; }
 }
 
@@ -332,3 +334,4 @@ details pre { margin-top: 8px; padding: 10px; background: var(--bg); border-radi
 .mini input[type='number'] { width: 72px; }
 .inline-form:has(.mini) { align-items: end; }
 .rows > div > .row { width: 100%; }
+input[type='file'] { max-width: 100%; min-width: 0; }

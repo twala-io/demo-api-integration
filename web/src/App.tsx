@@ -81,6 +81,8 @@ export function App() {
   const changed = useCallback(() => setVersion((v) => v + 1), []);
   useEffect(() => onStream((event) => event.type === 'webhook' && (changed(), refreshAccount())), [changed, refreshAccount]);
 
+  // On phones the menu is one sideways row, so keep the current screen in view.
+  useEffect(() => { document.querySelector('.nav-on')?.scrollIntoView({ block: 'nearest', inline: 'center' }); }, [section]);
   const current = SECTIONS.find((s) => s.id === section)!;
   return (
     <AppContext.Provider value={{ account, refreshAccount, envelopeId, selectEnvelope, go, version, changed }}>
