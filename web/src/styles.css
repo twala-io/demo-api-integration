@@ -103,7 +103,7 @@ h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing
 .link { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; }
 .link:hover { text-decoration: underline; }
 
-.content { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+.content { flex: 1; min-width: 0; max-width: 1100px; padding: 28px 32px; }
 
 .drawer {
   position: fixed;
@@ -269,3 +269,56 @@ h2 { font-size: 18px; margin: 0 0 2px; }
 .file { display: inline-block; margin-top: 6px; cursor: pointer; }
 .recipients li { align-items: center; }
 .recipients li > .inline-form { flex-basis: 100%; }
+
+.layout { display: flex; align-items: flex-start; }
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 2px;
+  width: 230px;
+  flex-shrink: 0;
+  padding: 20px 12px;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+.nav { padding: 8px 12px; text-align: left; background: none; border: 0; border-radius: 8px; cursor: pointer; }
+.nav:hover { background: var(--hover); }
+.nav-on { background: var(--selected); color: var(--accent); font-weight: 600; }
+.section-head { display: grid; gap: 8px; margin-bottom: 20px; }
+.section-head p { margin: 0; }
+.calls { display: flex; flex-wrap: wrap; gap: 6px; }
+.call { font: 12px var(--mono); padding: 2px 8px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); }
+.stack { display: grid; gap: 14px; }
+.picker { display: flex; align-items: flex-end; gap: 12px; }
+.grow { flex: 1; }
+.mono { font-family: var(--mono); }
+.check { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; }
+.rules { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.field select, .field input[type='file'] { font: inherit; font-size: 14px; }
+.recipient-rows { display: grid; gap: 8px; }
+.recipient-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.recipient-row input, .recipient-row select {
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  padding: 6px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.recipient-row input { flex: 1; min-width: 150px; }
+.order { width: 16px; text-align: right; }
+.add { justify-self: start; }
+.role-label { min-width: 110px; font-weight: 600; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th, .table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.table th { font-size: 12px; color: var(--muted); font-weight: 600; }
+details summary { cursor: pointer; color: var(--muted); }
+details pre { margin-top: 8px; padding: 10px; background: var(--bg); border-radius: 8px; max-height: 40vh; overflow: auto; }
+
+@media (max-width: 860px) {
+  .layout { flex-direction: column; }
+  .sidebar { position: static; width: 100%; display: flex; flex-wrap: wrap; max-height: none; padding: 12px 16px 0; }
+  .content { padding: 20px 16px; }
+}
