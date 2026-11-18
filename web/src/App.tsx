@@ -3,6 +3,7 @@ import { api, call, twala, type Account, type Status } from './api';
 import { ApiLogDrawer } from './components/ApiLogDrawer';
 import { ErrorNotice } from './components/ErrorNotice';
 import { StatusBar } from './components/StatusBar';
+import { ThemeSwitch } from './components/ThemeSwitch';
 import { takeReturnEvent } from './returnEvent';
 import { AccountSection } from './sections/Account';
 import { DocumentsSection } from './sections/Documents';
@@ -102,7 +103,10 @@ export function App() {
               Test usage today: {account.limits.testEnvelopesToday}/{account.limits.testEnvelopesPerDay} envelopes · {account.limits.testTimestampsToday}/{account.limits.testTimestampsPerDay} timestamps
             </span>
           )}
-          <StatusBar status={status} accountError={accountError} onRefresh={refreshAccount} />
+          <div className="status">
+            <StatusBar status={status} accountError={accountError} onRefresh={refreshAccount} />
+            <ThemeSwitch />
+          </div>
         </header>
         <div className="layout">
           <nav className="sidebar">
