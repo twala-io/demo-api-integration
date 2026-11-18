@@ -11,7 +11,10 @@ export const STATUS_TONE: Record<string, string> = {
   expired: 'pill-bad',
 };
 
-export const label = (value: string) => (value.charAt(0).toUpperCase() + value.slice(1)).replaceAll(/[_.]/g, ' ');
+export const label = (value: string) => {
+  const words = value.replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll(/[_.]/g, ' ').toLowerCase();
+  return (words.charAt(0).toUpperCase() + words.slice(1)).replace(/\b[Ii]p\b/g, 'IP');
+};
 
 export const dateTime = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' }) : '—';

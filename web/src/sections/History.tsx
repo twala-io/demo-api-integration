@@ -21,7 +21,10 @@ export function HistorySection() {
             <ErrorNotice error={audit.error} />
             {audit.data?.map((h, i) => (
               <div key={i} className="line">
-                <span className="small">{label(h.action)}{h.actor?.name ? <span className="muted"> · {h.actor.name}</span> : null}</span>
+                <span className="small">
+                  {label(h.action)}{h.actor?.name ? <span className="muted"> · {h.actor.name}</span> : null}
+                  {Object.entries(h.details ?? {}).filter(([, v]) => v != null && v !== '').map(([k, v]) => <span key={k} className="muted"> · {label(k)}: {String(v)}</span>)}
+                </span>
                 <span className="muted small">{dateTime(h.occurredAt)}</span>
               </div>
             ))}
